@@ -3,6 +3,7 @@ from settings import Settings
 import pygame
 from ship import Ship
 from bullet import Bullet
+from alien import Alien
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behaviour"""
@@ -17,9 +18,13 @@ class AlienInvasion:
 
 		self.ship = Ship(self)
 		self.bullets = pygame.sprite.Group()
+		self.aliens = pygame.sprite.Group()
 
 		# Set background colour
 		self.bg_colour = (230, 230, 230)
+
+		# Create fleet
+		self._create_fleet()
 
 	def run_game(self):
 		"""Start the main loop for the game"""
@@ -73,6 +78,34 @@ class AlienInvasion:
 				self.bullets.remove(bullet)
 		print(len(self.bullets))
 
+	def _create_fleet(self):
+		"""Create fleet of enemies"""
+		# Make an alien
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size
+		ship_height = self.ship.rect.height
+		# Determine how many ships on a row
+		available_space_x = self.settings.screen_width - (2 * alien_width)
+		number_aliens_x = available_space_x // (2 * alien_width)
+		# Determine how many rows of ships
+		available_space_y = self.settings.screen_height - \
+											((2 * alien_height) - ship_height)
+		number_rows = available_space_y // (2 * alien_height)
+
+		for row_number in range(number_rows):
+			for alien_number in range(number_aliens_x):
+				self._create_alien(alien_number, row_number)
+
+	def _create_alien(self, alien_number, row_number):
+		"""creates an alien"""
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size
+		alien.x = alien_width+2 * alien_width * alien_number
+		alien.y = alien_height+2 * alien_height * row_number
+		alien.rect.x = alien.x
+		alien.rect.y = alien.y
+		self.aliens.add(alien)		
+
 	def _update_screen(self):
 		"""update images on the screen and flip to the new screen"""
 		# Redraw the screen during each pass through the loop
@@ -80,6 +113,7 @@ class AlienInvasion:
 		self.ship.blitme()
 		for bullet in self.bullets.sprites():
 			bullet.draw_bullet()
+		self.aliens.draw(self.screen)
 		# Make the most recently drawn screen visible
 		pygame.display.flip()
 
