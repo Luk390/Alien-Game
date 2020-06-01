@@ -7,6 +7,7 @@ from alien import Alien
 from time import sleep
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard#
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behaviour"""
@@ -33,6 +34,9 @@ class AlienInvasion:
 
 		# Create button
 		self.play_button = Button(self, "Play")
+
+		# Create scoreboard instance
+		self.scoreboard = Scoreboard(self)
 
 	def run_game(self):
 		"""Start the main loop for the game"""
@@ -61,12 +65,16 @@ class AlienInvasion:
 		"""Start new game if click play button"""
 		button_clicked = self.play_button.rect.collidepoint(mouse_pos)
 		if button_clicked and not self.game_stats.game_active:
+			# Reset game settings
+			self.settings.initialise_dynamic_settings()
+
 			# Hide mouse cursor
 			pygame.mouse.set_visible(False)
 
 			# Reset game stats
 			self.game_stats.reset_stats()
 			self.game_stats.game_active = True
+			self.scoreboard.prep_score()
 
 			# Get rid of any aliens and bullets
 			self.aliens.empty()
@@ -118,11 +126,20 @@ class AlienInvasion:
 		# Check for bullet collisions
 		# Get rid of bullet and alien
 		collisions = pygame.sprite.groupcollide(
-			self.bullets, self.aliens, True, True)
+			self.bullets, self.aliens, False, True)
+		if collisions:
+			for collision in collisions.values():
+				print(collision)
+				self.game_stats.score += self.settings.alien_points \
+				* len('Alien')
+				self.scoreboard.prep_score()
+
 		# Check if fleet is empty and recreate fleet
 		if not self.aliens:
 			self.bullets.empty()
-			self._create_fleet()		
+			self._create_fleet()
+			self.settings.increase_speed()
+
 
 	def _update_aliens(self):
 		# Update alien fleet
@@ -188,8 +205,14 @@ class AlienInvasion:
 		# Draw play button
 		if not self.game_stats.game_active:
 			self.play_button.draw_button()
+
+		# Draw scoreboard
+		self.scoreboard.show_score()
+
 		# Make the most recently drawn screen visible
 		pygame.display.flip()
+
+
 
 	def _ship_hit(self):
 		"""Respond to the ship being hit"""
