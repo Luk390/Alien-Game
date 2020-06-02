@@ -75,6 +75,8 @@ class AlienInvasion:
 			self.game_stats.reset_stats()
 			self.game_stats.game_active = True
 			self.scoreboard.prep_score()
+			self.scoreboard.prep_level()
+			self.scoreboard.prep_ships()
 
 			# Get rid of any aliens and bullets
 			self.aliens.empty()
@@ -126,19 +128,24 @@ class AlienInvasion:
 		# Check for bullet collisions
 		# Get rid of bullet and alien
 		collisions = pygame.sprite.groupcollide(
-			self.bullets, self.aliens, False, True)
+			self.bullets, self.aliens, True, True)
 		if collisions:
 			for collision in collisions.values():
 				print(collision)
 				self.game_stats.score += self.settings.alien_points \
 				* len('Alien')
 				self.scoreboard.prep_score()
+				self.scoreboard.check_hi_score()
 
 		# Check if fleet is empty and recreate fleet
 		if not self.aliens:
 			self.bullets.empty()
 			self._create_fleet()
 			self.settings.increase_speed()
+
+			# Increase game level
+			self.game_stats.level += 1
+			self.scoreboard.prep_level()
 
 
 	def _update_aliens(self):
@@ -163,7 +170,8 @@ class AlienInvasion:
 		# Determine how many rows of ships
 		available_space_y = self.settings.screen_height - \
 											((2 * alien_height) - ship_height)
-		number_rows = available_space_y // (2 * alien_height)
+		number_rows_float = available_space_y // (2 * alien_height)
+		number_rows = int(number_rows_float)
 
 		for row_number in range(number_rows):
 			for alien_number in range(number_aliens_x):
@@ -212,13 +220,12 @@ class AlienInvasion:
 		# Make the most recently drawn screen visible
 		pygame.display.flip()
 
-
-
 	def _ship_hit(self):
 		"""Respond to the ship being hit"""
 		if self.game_stats.ships_left > 0:
 			# Reduce ship lives
 			self.game_stats.ships_left -= 1
+			self.scoreboard.prep_ships()
 
 			# Get rid of aliens and remaining bullets
 			self.aliens.empty()
@@ -233,8 +240,6 @@ class AlienInvasion:
 		else:
 			self.game_stats.game_active = False
 			pygame.mouse.set_visible(True)
-
-
 
 	def _check_aliens_bottom(self):
 		"""Check to see if aliens hit bottom of the screen"""

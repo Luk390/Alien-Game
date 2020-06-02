@@ -10,7 +10,7 @@ class Alien(Sprite):
 		self.settings = ai_game.settings
 
 		# Load alien
-		self.image = pygame.image.load('images/footballBully.bmp')
+		self.image = pygame.image.load('images/aaron.bmp')
 		self.rect = self.image.get_rect()
 
 		# Start each new alien near top left
